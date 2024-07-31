@@ -8,13 +8,13 @@ The plugin analyzes the webmanifest and emits icons from it, and also modifies t
 
 ```shell
 # npm
-npm i vite-plugin-webmanifest -D
+npm i @budarin/vite-plugin-webmanifest -D
 
 # yarn
-yarn add vite-plugin-webmanifest -D
+yarn add @budarin/vite-plugin-webmanifest -D
 
 # pnpm
-pnpm add vite-plugin-webmanifest -D
+pnpm add @budarin/vite-plugin-webmanifest -D
 
 ```
 
