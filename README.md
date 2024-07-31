@@ -23,7 +23,7 @@ pnpm add vite-plugin-webmanifest -D
 Add `webmanifest` plugin to vite.config.js / vite.config.ts and configure it:
 
 ```ts
-import { VitePWA } from '@budarin/vite-plugin-webmanifest';
+import { webmanifestPlugin } from '@budarin/vite-plugin-webmanifest';
 
 export default {
     plugins: [webmanifestPlugin()],
