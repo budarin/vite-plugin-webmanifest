@@ -136,7 +136,7 @@ export const webmanifestPlugin = (): Plugin => {
                 const fileId = this.emitFile({
                     type: 'asset',
                     name: `${manifestName}${manifestExt}`,
-                    source: JSON.stringify(manifestJson, null, 2),
+                    source: JSON.stringify(manifestJson, null, 4),
                 });
 
                 const manifestfileName = this.getFileName(fileId);
