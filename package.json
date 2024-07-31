@@ -1,30 +1,30 @@
 {
-  "name": "@budarin/vite-plugin-webmanifest",
-  "version": "1.0.0",
-  "description": "Vite plugin for transforming webmanifest",
-  "homepage": "https://github.com/budarin/vite-plugin-webmanifest#readme",
-  "repository": {
-    "url": "git+https://github.com/budarin/vite-plugin-webmanifest.git"
-  },
-  "type": "module",
-  "main": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "keywords": [
-    "vite",
-    "plugin",
-    "webmanifest"
-  ],
-  "author": "Vadim Budarin",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "node-html-parser": "^6.1.13",
-    "typescript": "^5.5.4",
-    "vite": "^5.3.5"
-  },
-  "scripts": {
-    "build": "tsc",
-    "publish": "pnpm run build && pnpm publish"
-  },
-  "packageManager": "pnpm@9.5.0+sha256.dbdf5961c32909fb030595a9daa1dae720162e658609a8f92f2fa99835510ca5"
+    "name": "@budarin/vite-plugin-webmanifest",
+    "version": "1.0.0",
+    "description": "Vite plugin for transforming webmanifest",
+    "homepage": "https://github.com/budarin/vite-plugin-webmanifest#readme",
+    "repository": {
+        "url": "git+https://github.com/budarin/vite-plugin-webmanifest.git"
+    },
+    "type": "module",
+    "main": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "keywords": [
+        "vite",
+        "plugin",
+        "webmanifest"
+    ],
+    "author": "Vadim Budarin",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "node-html-parser": "^6.1.13",
+        "typescript": "^5.5.4",
+        "vite": "^5.3.5"
+    },
+    "scripts": {
+        "build": "rm -rf ./dist && tsc",
+        "publish": "pnpm run build && pnpm publish"
+    },
+    "packageManager": "pnpm@9.5.0+sha256.dbdf5961c32909fb030595a9daa1dae720162e658609a8f92f2fa99835510ca5"
 }
