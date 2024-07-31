@@ -7,8 +7,8 @@
         "url": "git+https://github.com/budarin/vite-plugin-webmanifest.git"
     },
     "type": "module",
-    "main": "dist/index.mjs",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
     "keywords": [
         "vite",
         "plugin",
