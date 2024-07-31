@@ -16,6 +16,10 @@
     ],
     "author": "Vadim Budarin",
     "license": "MIT",
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
     "devDependencies": {
         "@types/node": "^22.0.0",
         "node-html-parser": "^6.1.13",
