@@ -2,6 +2,7 @@ import type { Plugin } from 'vite';
 
 import fs from 'fs';
 import path from 'path';
+import { promisify } from 'util';
 import { parse } from 'node-html-parser';
 
 type Icon = {
@@ -10,18 +11,18 @@ type Icon = {
     type: string;
 };
 
-function emitIcons(icons: Icon[], callback: (iconName: string, iconPath: string) => string): void {
+async function emitIcons(
+    icons: Icon[],
+    callback: (iconName: string, iconPath: string) => Promise<string>,
+): Promise<void> {
     const root = process.cwd();
-
     if (icons && Array.isArray(icons)) {
         for (const icon of icons) {
             const iconPath = path.join(root, icon.src);
-
-            if (fs.existsSync(iconPath)) {
+            if (await exists(iconPath)) {
                 const iconExt = path.extname(iconPath);
                 const iconName = path.basename(iconPath, iconExt);
-                const fileName = callback(`${iconName}${iconExt}`, iconPath);
-
+                const fileName = await callback(`${iconName}${iconExt}`, iconPath);
                 // Update the icon path in the manifest
                 icon.src = `/${fileName}`;
             }
@@ -41,19 +42,19 @@ type Shortcut = {
     ];
 };
 
-function emitShortcutIcons(shortcuts: Shortcut[], callback: (iconName: string, iconPath: string) => string): void {
+async function emitShortcutIcons(
+    shortcuts: Shortcut[],
+    callback: (iconName: string, iconPath: string) => Promise<string>,
+): Promise<void> {
     const root = process.cwd();
-
     if (shortcuts && Array.isArray(shortcuts)) {
         for (const shortcut of shortcuts) {
             for (const icon of shortcut.icons) {
                 const iconPath = path.join(root, icon.src);
-
-                if (fs.existsSync(iconPath)) {
+                if (await exists(iconPath)) {
                     const iconExt = path.extname(iconPath);
                     const iconName = path.basename(iconPath, iconExt);
-                    const fileName = callback(`${iconName}${iconExt}`, iconPath);
-
+                    const fileName = await callback(`${iconName}${iconExt}`, iconPath);
                     // Update the icon path in the manifest
                     icon.src = `/${fileName}`;
                 }
@@ -61,6 +62,9 @@ function emitShortcutIcons(shortcuts: Shortcut[], callback: (iconName: string, i
         }
     }
 }
+
+const readFile = promisify(fs.readFile);
+const exists = promisify(fs.exists);
 
 export const webmanifestPlugin = (): Plugin => {
     return {
@@ -74,8 +78,8 @@ export const webmanifestPlugin = (): Plugin => {
             const indexPath = path.join(root, 'index.html');
             let manifestPath;
 
-            if (fs.existsSync(indexPath)) {
-                const indexContent = fs.readFileSync(indexPath, 'utf-8');
+            if (await exists(indexPath)) {
+                const indexContent = await readFile(indexPath, 'utf-8');
                 const rootHtml = parse(indexContent);
                 const manifestLink = rootHtml.querySelector('link[rel="manifest"]');
 
@@ -84,41 +88,41 @@ export const webmanifestPlugin = (): Plugin => {
                 }
             }
 
-            if (!manifestPath || !fs.existsSync(manifestPath)) {
+            if (!manifestPath || !(await exists(manifestPath))) {
                 this.error('WebManifest file not found');
             } else {
-                const manifestContent = fs.readFileSync(manifestPath, 'utf-8');
+                const manifestContent = await readFile(manifestPath, 'utf-8');
                 const manifestJson = JSON.parse(manifestContent);
                 const icons = manifestJson.icons as Icon[];
                 const screenshots = manifestJson.screenshots;
                 const shortcuts = manifestJson.shortcuts;
 
-                emitIcons(icons, (iconName, iconPath) => {
+                await emitIcons(icons, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
-                        source: fs.readFileSync(iconPath),
+                        source: await readFile(iconPath, { encoding: 'utf-8' }),
                     });
 
                     // Get path to the icon asset
                     return this.getFileName(fileId);
                 });
 
-                emitIcons(screenshots, (iconName, iconPath) => {
+                await emitIcons(screenshots, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
-                        source: fs.readFileSync(iconPath),
+                        source: await readFile(iconPath, { encoding: 'utf-8' }),
                     });
 
                     return this.getFileName(fileId);
                 });
 
-                emitShortcutIcons(shortcuts, (iconName, iconPath) => {
+                await emitShortcutIcons(shortcuts, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
-                        source: fs.readFileSync(iconPath),
+                        source: await readFile(iconPath, { encoding: 'utf-8' }),
                     });
 
                     return this.getFileName(fileId);

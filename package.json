@@ -12,6 +12,7 @@
     "keywords": [
         "vite",
         "plugin",
+        "vite-plugin",
         "webmanifest"
     ],
     "author": "Vadim Budarin",
