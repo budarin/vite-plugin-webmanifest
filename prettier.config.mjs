@@ -1,5 +1,9 @@
-import config from '@budarin/spa-react-app-config';
+const config = {
+    bracketSpacing: true,
+    tabWidth: 4,
+    singleQuote: true,
+    trailingComma: 'all',
+    printWidth: 100,
+};
 
-const prettierConfig = config.getPrettierConfig();
-
-export default prettierConfig;
+export default config;
