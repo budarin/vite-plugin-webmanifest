@@ -115,7 +115,7 @@ export const webmanifestPlugin = (): Plugin => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
-                        source: await readFile(iconPath, { encoding: 'utf-8' }),
+                        source: await readFile(iconPath),
                     });
 
                     // Get path to the icon asset
@@ -126,7 +126,7 @@ export const webmanifestPlugin = (): Plugin => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
-                        source: await readFile(iconPath, { encoding: 'utf-8' }),
+                        source: await readFile(iconPath),
                     });
 
                     return this.getFileName(fileId);
@@ -136,7 +136,7 @@ export const webmanifestPlugin = (): Plugin => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
-                        source: await readFile(iconPath, { encoding: 'utf-8' }),
+                        source: await readFile(iconPath),
                     });
 
                     return this.getFileName(fileId);
