@@ -102,8 +102,12 @@ export const webmanifestPlugin = (): Plugin => {
                 this.error('WebManifest file not found');
             } else {
                 const manifestContent = await readFile(manifestPath, 'utf-8');
-                const manifestJson = JSON.parse(manifestContent);
-                const icons = manifestJson.icons as Icon[];
+                const manifestJson = JSON.parse(manifestContent) as {
+                    icons: Icon[];
+                    screenshots: Icon[];
+                    shortcuts: Shortcut[];
+                };
+                const icons = manifestJson.icons;
                 const screenshots = manifestJson.screenshots;
                 const shortcuts = manifestJson.shortcuts;
 
