@@ -13,6 +13,7 @@ type Icon = {
 
 async function emitIcons(
     icons: Icon[],
+    base: string = '/',
     callback: (iconName: string, iconPath: string) => Promise<string>,
 ): Promise<void> {
     const root = process.cwd();
@@ -24,7 +25,7 @@ async function emitIcons(
                 const iconName = path.basename(iconPath, iconExt);
                 const fileName = await callback(`${iconName}${iconExt}`, iconPath);
                 // Update the icon path in the manifest
-                icon.src = `/${fileName}`;
+                icon.src = `${base}${fileName}`;
             }
         }
     }
@@ -44,6 +45,7 @@ type Shortcut = {
 
 async function emitShortcutIcons(
     shortcuts: Shortcut[],
+    base: string = '/',
     callback: (iconName: string, iconPath: string) => Promise<string>,
 ): Promise<void> {
     const root = process.cwd();
@@ -56,7 +58,7 @@ async function emitShortcutIcons(
                     const iconName = path.basename(iconPath, iconExt);
                     const fileName = await callback(`${iconName}${iconExt}`, iconPath);
                     // Update the icon path in the manifest
-                    icon.src = `/${fileName}`;
+                    icon.src = `${base}${fileName}`;
                 }
             }
         }
@@ -67,11 +69,16 @@ const readFile = promisify(fs.readFile);
 const exists = promisify(fs.exists);
 
 export const webmanifestPlugin = (): Plugin => {
+    let base: string = '/';
+
     return {
         name: 'vite:webmanifest',
-
         apply: 'build',
         enforce: 'post',
+
+        configResolved(config) {
+            base = config.base;
+        },
 
         async generateBundle(_, bundle) {
             const root = process.cwd();
@@ -84,7 +91,10 @@ export const webmanifestPlugin = (): Plugin => {
                 const manifestLink = rootHtml.querySelector('link[rel="manifest"]');
 
                 if (manifestLink) {
-                    manifestPath = path.join(root, manifestLink.getAttribute('href')!);
+                    const href = manifestLink.getAttribute('href');
+                    if (href) {
+                        manifestPath = path.join(root, href);
+                    }
                 }
             }
 
@@ -97,7 +107,7 @@ export const webmanifestPlugin = (): Plugin => {
                 const screenshots = manifestJson.screenshots;
                 const shortcuts = manifestJson.shortcuts;
 
-                await emitIcons(icons, async (iconName, iconPath) => {
+                await emitIcons(icons, base, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
@@ -108,7 +118,7 @@ export const webmanifestPlugin = (): Plugin => {
                     return this.getFileName(fileId);
                 });
 
-                await emitIcons(screenshots, async (iconName, iconPath) => {
+                await emitIcons(screenshots, base, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
@@ -118,7 +128,7 @@ export const webmanifestPlugin = (): Plugin => {
                     return this.getFileName(fileId);
                 });
 
-                await emitShortcutIcons(shortcuts, async (iconName, iconPath) => {
+                await emitShortcutIcons(shortcuts, base, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
                         type: 'asset',
                         name: iconName,
@@ -153,7 +163,7 @@ export const webmanifestPlugin = (): Plugin => {
                         const rootHtml = parse(htmlChunk.source);
                         const manifestLink = rootHtml.querySelector('link[rel="manifest"]');
                         if (manifestLink) {
-                            manifestLink.setAttribute('href', `/${manifestfileName}`);
+                            manifestLink.setAttribute('href', `${base}${manifestfileName}`);
                             htmlChunk.source = rootHtml.toString();
                         }
                     }
@@ -162,6 +172,7 @@ export const webmanifestPlugin = (): Plugin => {
                 // Remove the wrong manifest from the bundle
                 for (const fileName in bundle) {
                     if (fileName.endsWith(manifestExt) && fileName !== manifestfileName) {
+                        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                         delete bundle[fileName];
                     }
                 }
