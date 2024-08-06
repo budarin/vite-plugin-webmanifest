@@ -20,7 +20,7 @@ pnpm add @budarin/vite-plugin-webmanifest -D
 
 ## Usage
 
-Add `webmanifest` plugin to vite.config.js / vite.config.ts and configure it:
+Add `webmanifest` plugin to vite.config.mjs / vite.config.mts and configure it:
 
 ```ts
 import { webmanifestPlugin } from '@budarin/vite-plugin-webmanifest';
