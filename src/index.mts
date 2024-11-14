@@ -3,7 +3,7 @@ import type { Plugin } from 'vite';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { parse } from 'node-html-parser';
+import * as cheerio from 'cheerio';
 
 type Icon = {
     src: string;
@@ -17,13 +17,16 @@ async function emitIcons(
     callback: (iconName: string, iconPath: string) => Promise<string>,
 ): Promise<void> {
     const root = process.cwd();
+
     if (icons && Array.isArray(icons)) {
         for (const icon of icons) {
             const iconPath = path.join(root, icon.src);
+
             if (await exists(iconPath)) {
                 const iconExt = path.extname(iconPath);
                 const iconName = path.basename(iconPath, iconExt);
                 const fileName = await callback(`${iconName}${iconExt}`, iconPath);
+
                 // Update the icon path in the manifest
                 icon.src = `${base}${fileName}`;
             }
@@ -49,14 +52,17 @@ async function emitShortcutIcons(
     callback: (iconName: string, iconPath: string) => Promise<string>,
 ): Promise<void> {
     const root = process.cwd();
+
     if (shortcuts && Array.isArray(shortcuts)) {
         for (const shortcut of shortcuts) {
             for (const icon of shortcut.icons) {
                 const iconPath = path.join(root, icon.src);
+
                 if (await exists(iconPath)) {
                     const iconExt = path.extname(iconPath);
                     const iconName = path.basename(iconPath, iconExt);
                     const fileName = await callback(`${iconName}${iconExt}`, iconPath);
+
                     // Update the icon path in the manifest
                     icon.src = `${base}${fileName}`;
                 }
@@ -81,17 +87,18 @@ export const webmanifestPlugin = (): Plugin => {
         },
 
         async generateBundle(_, bundle) {
+            let manifestPath;
             const root = process.cwd();
             const indexPath = path.join(root, 'index.html');
-            let manifestPath;
 
             if (await exists(indexPath)) {
                 const indexContent = await readFile(indexPath, 'utf-8');
-                const rootHtml = parse(indexContent);
-                const manifestLink = rootHtml.querySelector('link[rel="manifest"]');
+                const $ = cheerio.load(indexContent);
+                const manifestLink = $('link[rel="manifest"]');
 
                 if (manifestLink) {
-                    const href = manifestLink.getAttribute('href');
+                    const href = manifestLink.attr('href');
+
                     if (href) {
                         manifestPath = path.join(root, href);
                     }
@@ -103,6 +110,8 @@ export const webmanifestPlugin = (): Plugin => {
             } else {
                 const manifestContent = await readFile(manifestPath, 'utf-8');
                 const manifestJson = JSON.parse(manifestContent) as {
+                    scope: string;
+                    start_url: string;
                     icons: Icon[];
                     screenshots: Icon[];
                     shortcuts: Shortcut[];
@@ -110,6 +119,9 @@ export const webmanifestPlugin = (): Plugin => {
                 const icons = manifestJson.icons;
                 const screenshots = manifestJson.screenshots;
                 const shortcuts = manifestJson.shortcuts;
+
+                manifestJson.scope = base;
+                manifestJson['start_url'] = base;
 
                 await emitIcons(icons, base, async (iconName, iconPath) => {
                     const fileId = this.emitFile({
@@ -164,11 +176,12 @@ export const webmanifestPlugin = (): Plugin => {
                         htmlChunk.type === 'asset' &&
                         typeof htmlChunk.source === 'string'
                     ) {
-                        const rootHtml = parse(htmlChunk.source);
-                        const manifestLink = rootHtml.querySelector('link[rel="manifest"]');
+                        const $ = cheerio.load(htmlChunk.source);
+                        const manifestLink = $('link[rel="manifest"]');
+
                         if (manifestLink) {
-                            manifestLink.setAttribute('href', `${base}${manifestfileName}`);
-                            htmlChunk.source = rootHtml.toString();
+                            manifestLink.attr('href', `${base}${manifestfileName}`);
+                            htmlChunk.source = $.html();
                         }
                     }
                 }
