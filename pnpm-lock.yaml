@@ -7,14 +7,13 @@ settings:
 importers:
 
   .:
-    dependencies:
-      cheerio:
-        specifier: ^1.0.0
-        version: 1.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
         version: 22.0.0
+      cheerio:
+        specifier: ^1.0.0
+        version: 1.0.0
       prettier:
         specifier: ^3.3.3
         version: 3.3.3
@@ -305,8 +304,8 @@ packages:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
 
-  nanoid@3.3.7:
-    resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
+  nanoid@3.3.8:
+    resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -619,7 +618,7 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  nanoid@3.3.7: {}
+  nanoid@3.3.8: {}
 
   nth-check@2.1.1:
     dependencies:
@@ -642,7 +641,7 @@ snapshots:
 
   postcss@8.4.40:
     dependencies:
-      nanoid: 3.3.7
+      nanoid: 3.3.8
       picocolors: 1.0.1
       source-map-js: 1.2.0
 
