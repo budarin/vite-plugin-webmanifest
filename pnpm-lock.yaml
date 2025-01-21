@@ -7,14 +7,13 @@ settings:
 importers:
 
   .:
-    dependencies:
-      cheerio:
-        specifier: ^1.0.0
-        version: 1.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
         version: 22.0.0
+      cheerio:
+        specifier: ^1.0.0
+        version: 1.0.0
       prettier:
         specifier: ^3.3.3
         version: 3.3.3
