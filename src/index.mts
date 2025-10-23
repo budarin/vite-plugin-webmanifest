@@ -134,7 +134,7 @@ async function emitShortcutIcons(
  * and updates manifest paths according to the build configuration
  */
 export const webmanifestPlugin = (): Plugin => {
-    let base: string = '/';
+    let base: string = './';
     let root: string = process.cwd();
 
     return {

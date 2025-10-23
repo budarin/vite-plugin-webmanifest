@@ -1,8 +1,13 @@
 # vite-plugin-webmanifest
 
-By default, Vite does not analyze or modify webmanifest, so it does not emit the icons it references.
+A Vite plugin that processes Web App Manifest files, automatically emitting all referenced assets (icons, screenshots, shortcut icons) with content hashes and updating paths in the manifest.
 
-The plugin analyzes the webmanifest and emits icons from it, and also modifies the paths to these icons in the manifest itself.
+## Features
+
+- 🚀 High-performance parallel processing of manifest assets
+- 📦 Automatic hashing of icons, screenshots, and shortcut icons
+- 🔄 Updates manifest paths and adjusts `scope`/`start_url` based on Vite's `base`
+- 🔌 Zero configuration required
 
 ## Install
 
@@ -15,20 +20,35 @@ yarn add -D @budarin/vite-plugin-webmanifest
 
 # pnpm
 pnpm add -D @budarin/vite-plugin-webmanifest
-
 ```
 
 ## Usage
 
-Add `webmanifest` plugin to vite.config.mjs / vite.config.mts and configure it:
+Add the plugin to your `vite.config.ts`:
 
 ```ts
+import { defineConfig } from 'vite';
 import { webmanifestPlugin } from '@budarin/vite-plugin-webmanifest';
 
-export default {
+export default defineConfig({
     plugins: [webmanifestPlugin()],
-};
+});
 ```
+
+Link your manifest in `index.html`:
+
+```html
+<link rel="manifest" href="/manifest.webmanifest" />
+```
+
+## Configuration
+
+The plugin requires **no configuration**. It automatically:
+
+- Discovers the manifest file from your `index.html`
+- Processes all referenced assets in parallel
+- Updates paths with content hashes for optimal caching
+- Adjusts `scope` and `start_url` based on Vite's `base` config
 
 ## License
 
