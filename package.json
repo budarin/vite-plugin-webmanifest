@@ -1,6 +1,6 @@
 {
     "name": "@budarin/vite-plugin-webmanifest",
-    "version": "1.0.12",
+    "version": "1.0.13",
     "description": "Vite plugin for transforming webmanifest",
     "homepage": "https://github.com/budarin/vite-plugin-webmanifest#readme",
     "repository": {
@@ -21,16 +21,21 @@
         "access": "public",
         "registry": "https://registry.npmjs.org/"
     },
+    "peerDependencies": {
+        "vite": ">=5.0.0"
+    },
+    "dependencies": {
+        "cheerio": "^1.0.0"
+    },
     "devDependencies": {
         "@types/node": "^22.13.2",
-        "cheerio": "^1.0.0",
         "prettier": "^3.5.0",
         "typescript": "^5.7.3",
         "vite": "^6.1.0"
     },
     "scripts": {
-        "build": "rm -rf ./dist && tsc",
-        "publish-it": "pnpm run build && pnpm publish"
-    },
-    "packageManager": "pnpm@9.5.0+sha256.dbdf5961c32909fb030595a9daa1dae720162e658609a8f92f2fa99835510ca5"
-}
+       "build": "tsc",
+        "pnpm-install": "pnpm install",
+        "upgrade-dependencies": "pnpm upgrade -i",
+        "publish-package": "pnpm build && pnpm publish --access=public"
+    }}

@@ -1,41 +1,99 @@
 {
-    // text editor
-    "editor.formatOnSave": true,
-    "diffEditor.ignoreTrimWhitespace": false,
-    "editor.minimap.enabled": false,
-    "editor.suggestSelection": "first",
-    "editor.cursorSmoothCaretAnimation": "on",
+    // explorer
+    "explorer.autoReveal": true,
+    "explorer.incrementalNaming": "smart",
+    "debug.openExplorerOnEnd": true,
+
+    // editor
+    "editor.fontLigatures": true,
+    "editor.mouseWheelZoom": true,
     "editor.smoothScrolling": true,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.minimap.enabled": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.language.colorizedBracketPairs": [
+        [
+            "(",
+            ")"
+        ],
+        [
+            "[",
+            "]"
+        ],
+        [
+            "{",
+            "}"
+        ]
+    ],
+    "editor.suggestSelection": "first",
     "editor.codeActionsOnSave": {
         "source.fixAll": "explicit",
         "source.organizeImports": "never"
     },
-    "editor.bracketPairColorization.enabled": true,
     "editor.guides.bracketPairs": true,
     "editor.guides.highlightActiveBracketPair": false,
+    "editor.fontFamily": "Consolas, Monaco, Menlo,'Courier New', monospace",
 
     // files
     "files.autoSave": "onFocusChange",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
     "files.eol": "\n",
 
-    // workbench
-    "workbench.startupEditor": "none",
-    "workbench.iconTheme": "vscode-icons",
-    "workbench.sideBar.location": "left",
-    "workbench.editor.highlightModifiedTabs": true,
-    "workbench.list.smoothScrolling": true,
+    // git
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+    "git.autofetchPeriod": 60,
+    // "git.branchProtection": ["master"],
+    "git.checkoutType": [
+        "local",
+        "remote"
+    ],
+    "git.ignoreRebaseWarning": true,
+    "git.inputValidationSubjectLength": 100,
+    "git.inputValidationLength": 200,
+
+    // ts/javascript
+    // "typescript.surveys.enabled": false,
+    "javascript.suggestionActions.enabled": false,
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.preferences.importModuleSpecifier": "shortest",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "typescript.format.semicolons": "insert",
+    "javascript.format.semicolons": "insert",
 
     // prettier
     "prettier.enable": true,
     "json.format.enable": true,
+    "prettier.configPath": ".prettierrc.mjs",
+    "prettier.experimentalTernaries": true,
+    "prettier.enableDebugLogs": true,
+    "prettier.prettierPath": "./node_modules/prettier",
+    "prettier.htmlWhitespaceSensitivity": "strict",
     "[json]": {
         "editor.formatOnSave": true
     },
     "[css]": {
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "vscode.css-language-features"
     },
     "[html]": {
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[svg]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[typescriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -53,55 +111,17 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
 
-    // stylelint
-    "css.validate": true,
-    "less.validate": false,
-    "scss.validate": false,
-    "files.autoSaveDelay": 1000,
-    "stylelint.configFile": "./stylelint.config.mjs",
-
-    // git
-    "git.autofetch": true,
-    "git.autofetchPeriod": 60,
-    "git.confirmSync": false,
-    "git.enableSmartCommit": true,
-    // "git.branchProtection": ["master"],
-    "git.checkoutType": ["local", "remote"],
-    "git.ignoreRebaseWarning": true,
-    "git.inputValidationSubjectLength": 100,
-    "git.inputValidationLength": 200,
-
-    // ts/javascript
-    "javascript.updateImportsOnFileMove.enabled": "always",
-    "typescript.surveys.enabled": false,
-    "typescript.updateImportsOnFileMove.enabled": "always",
-    "typescript.tsdk": "./node_modules/typescript/lib",
-    "typescript.preferences.importModuleSpecifier": "relative",
-    "javascript.suggestionActions.enabled": false,
-
-    // extension
-    "extensions.ignoreRecommendations": true,
-    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
-    "emmet.includeLanguages": {
-        "postcss": "css",
-        "javascript": "javascriptreact"
-    },
-    "emmet.showSuggestionsAsSnippets": true,
-    "window.zoomLevel": 0,
-
-    // npm
-    "npm.packageManager": "pnpm",
-    "npm.scriptExplorerAction": "run",
-
-    //
-    "explorer.confirmDragAndDrop": false,
-    "json.maxItemsComputed": 250000,
+    // workbench
+    "workbench.iconTheme": "vscode-icons",
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.externalBrowser": "chrome",
+    "workbench.colorCustomizations": {},
 
     // terminal
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
     "terminal.integrated.cursorBlinking": true,
     "terminal.integrated.fontFamily": "Consolas, 'Courier New', monospace",
     "terminal.integrated.minimumContrastRatio": 4.5,
-    "terminal.integrated.defaultProfile.windows": "Git Bash",
     "terminal.integrated.smoothScrolling": true,
     "terminal.integrated.profiles.windows": {
         "Bash": {
@@ -118,5 +138,27 @@
         "sound": "on"
     },
     "terminal.integrated.enableVisualBell": true,
-    "editor.fontFamily": "Consolas, Monaco, Menlo,'Courier New', monospace"
+
+    // npm scripts
+    "npm.scriptExplorerAction": "run",
+
+    // emmet
+    "emmet.includeLanguages": {
+        "postcss": "css",
+        "javascript": "javascriptreact",
+        "typescript": "typescriptreact"
+    },
+    "emmet.showSuggestionsAsSnippets": true,
+
+    "notebook.defaultFormatter": "esbenp.prettier-vscode",
+    "window.zoomLevel": 0,
+
+    // extensions
+    "reactSnippets.settings.prettierEnabled": true,
+
+    "stylelint.configBasedir": "./",
+    "stylelint.configFile": "./stylelint.config.mjs",
+    "stylelint.packageManager": "pnpm",
+
+    "javascript.preferences.importModuleSpecifier": "non-relative",
 }
