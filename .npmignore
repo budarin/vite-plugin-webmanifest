@@ -2,3 +2,5 @@ src
 .vscode
 .prettierrc
 tsconfig.json
+prettier.config.mjs
+pnpm-workspace.yaml
