@@ -69,7 +69,6 @@ async function getCachedFile(filePath: string): Promise<Buffer> {
  */
 async function emitIcons(
     icons: Icon[] | undefined,
-    base: string = '/',
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
     pluginContext: any,
@@ -94,7 +93,7 @@ async function emitIcons(
                 const fileName = await callback(`${iconName}${iconExt}`, iconPath);
 
                 // Update the icon path in the manifest
-                icon.src = `${base}${fileName}`;
+                icon.src = fileName;
             } else {
                 pluginContext.error(`Icon file not found: ${iconPath}`, {
                     code: 'ICON_NOT_FOUND',
@@ -109,7 +108,6 @@ async function emitIcons(
  */
 async function emitShortcutIcons(
     shortcuts: Shortcut[] | undefined,
-    base: string = '/',
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
     pluginContext: any,
@@ -135,7 +133,7 @@ async function emitShortcutIcons(
                     const fileName = await callback(`${iconName}${iconExt}`, iconPath);
 
                     // Update the icon path in the manifest
-                    icon.src = `${base}${fileName}`;
+                    icon.src = fileName;
                 } else {
                     pluginContext.error(`Shortcut icon file not found: ${iconPath}`, {
                         code: 'SHORTCUT_ICON_NOT_FOUND',
@@ -221,15 +219,27 @@ export const webmanifestPlugin = (): Plugin => {
                     source: await getCachedFile(iconPath),
                 });
 
-                return this.getFileName(fileId);
+                const fileName = this.getFileName(fileId);
+
+                // Remove 'assets/' prefix if present since manifest is already in assets folder
+                const cleanFileName = fileName.startsWith('assets/') ? fileName.slice(7) : fileName;
+                return `./${cleanFileName}`;
             };
 
             // Process all icons in parallel
             await Promise.all([
-                emitIcons(manifestJson.icons, base, root, emitFileCallback, pluginContext),
-                emitIcons(manifestJson.screenshots, base, root, emitFileCallback, pluginContext),
-                emitShortcutIcons(manifestJson.shortcuts, base, root, emitFileCallback, pluginContext),
+                emitIcons(manifestJson.icons, root, emitFileCallback, pluginContext),
+                emitIcons(manifestJson.screenshots, root, emitFileCallback, pluginContext),
+                emitShortcutIcons(manifestJson.shortcuts, root, emitFileCallback, pluginContext),
             ]);
+
+            // Remove empty arrays to avoid PWA warnings
+            if (manifestJson.screenshots && manifestJson.screenshots.length === 0) {
+                delete manifestJson.screenshots;
+            }
+            if (manifestJson.shortcuts && manifestJson.shortcuts.length === 0) {
+                delete manifestJson.shortcuts;
+            }
 
             // Get file name of the manifest
             const manifestExt = path.extname(manifestPath);

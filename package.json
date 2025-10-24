@@ -1,6 +1,6 @@
 {
     "name": "@budarin/vite-plugin-webmanifest",
-    "version": "1.0.17",
+    "version": "1.0.18",
     "description": "Vite plugin for transforming webmanifest",
     "homepage": "https://github.com/budarin/vite-plugin-webmanifest#readme",
     "repository": {
