@@ -221,7 +221,7 @@ export const webmanifestPlugin = (): Plugin => {
 
                 const fileName = this.getFileName(fileId);
 
-                // Remove 'assets/' prefix if present since manifest is already in assets folder
+                // Remove only 'assets/' prefix, keep subdirectories like 'svgs/'
                 const cleanFileName = fileName.startsWith('assets/') ? fileName.slice(7) : fileName;
                 return `./${cleanFileName}`;
             };
