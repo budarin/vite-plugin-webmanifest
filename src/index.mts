@@ -1,9 +1,9 @@
 import type { Plugin } from 'vite';
 
-import { readFile } from 'fs/promises';
+import { readFile, writeFile, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import * as cheerio from 'cheerio';
+import { load } from 'cheerio';
 
 // Constants
 const HTML_EXTENSION = '.html';
@@ -43,6 +43,18 @@ export type WebManifest = {
 };
 
 /**
+ * Plugin configuration options
+ */
+export type WebManifestPluginOptions = {
+    /**
+     * Where to emit the manifest file
+     * @default 'root' - emits to /dist root
+     * @example 'assets' - emits to /assets/ folder (legacy behavior)
+     */
+    manifestOutput?: 'assets' | 'root';
+};
+
+/**
  * Check if file exists
  */
 function exists(filePath: string): boolean {
@@ -55,6 +67,11 @@ function exists(filePath: string): boolean {
 const fileCache = new Map<string, Buffer>();
 
 /**
+ * Path cache for avoiding duplicate path operations
+ */
+const pathCache = new Map<string, { ext: string; name: string }>();
+
+/**
  * Get file from cache or read from disk
  */
 async function getCachedFile(filePath: string): Promise<Buffer> {
@@ -65,6 +82,41 @@ async function getCachedFile(filePath: string): Promise<Buffer> {
 }
 
 /**
+ * Resolve icon path from src
+ */
+function resolveIconPath(src: string, root: string): string {
+    if (src.startsWith('/')) {
+        return path.join(root, src.slice(1));
+    }
+    return path.resolve(root, src);
+}
+
+/**
+ * Update HTML files to reference the root manifest
+ */
+async function updateHtmlManifestLinks(outputDir: string, manifestFileName: string): Promise<void> {
+    const indexPath = path.join(outputDir, 'index.html');
+
+    if (existsSync(indexPath)) {
+        try {
+            const htmlContent = await readFile(indexPath, 'utf-8');
+            const $ = load(htmlContent);
+            const manifestLink = $(MANIFEST_LINK_SELECTOR);
+
+            if (manifestLink.length > 0) {
+                // Update href to point to root manifest
+                manifestLink.attr('href', `./${manifestFileName}`);
+
+                // Write updated HTML
+                await writeFile(indexPath, $.html(), 'utf-8');
+            }
+        } catch (error) {
+            console.error(`❌ Failed to update HTML: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+}
+
+/**
  * Process and emit icons in parallel for better performance
  */
 async function emitIcons(
@@ -72,6 +124,7 @@ async function emitIcons(
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
     pluginContext: any,
+    errorCode: string = 'ICON_NOT_FOUND',
 ): Promise<void> {
     if (!icons || !Array.isArray(icons)) {
         return;
@@ -79,24 +132,25 @@ async function emitIcons(
 
     await Promise.all(
         icons.map(async (icon) => {
-            // Handle absolute paths starting with /
-            let iconPath: string;
-            if (icon.src.startsWith('/')) {
-                iconPath = path.join(root, icon.src.slice(1));
-            } else {
-                iconPath = path.resolve(root, icon.src);
-            }
+            const iconPath = resolveIconPath(icon.src, root);
 
             if (exists(iconPath)) {
-                const iconExt = path.extname(iconPath);
-                const iconName = path.basename(iconPath, iconExt);
-                const fileName = await callback(`${iconName}${iconExt}`, iconPath);
+                // Cache path operations for better performance
+                let pathInfo = pathCache.get(iconPath);
+                if (!pathInfo) {
+                    const iconExt = path.extname(iconPath);
+                    const iconName = path.basename(iconPath, iconExt);
+                    pathInfo = { ext: iconExt, name: iconName };
+                    pathCache.set(iconPath, pathInfo);
+                }
+
+                const fileName = await callback(`${pathInfo.name}${pathInfo.ext}`, iconPath);
 
                 // Update the icon path in the manifest
                 icon.src = fileName;
             } else {
                 pluginContext.error(`Icon file not found: ${iconPath}`, {
-                    code: 'ICON_NOT_FOUND',
+                    code: errorCode,
                 });
             }
         }),
@@ -116,21 +170,23 @@ async function emitShortcutIcons(
         return;
     }
 
+    // Process shortcut icons individually since they have different structure
     await Promise.all(
         shortcuts.flatMap((shortcut) =>
             shortcut.icons.map(async (icon) => {
-                // Handle absolute paths starting with /
-                let iconPath: string;
-                if (icon.src.startsWith('/')) {
-                    iconPath = path.join(root, icon.src.slice(1));
-                } else {
-                    iconPath = path.resolve(root, icon.src);
-                }
+                const iconPath = resolveIconPath(icon.src, root);
 
                 if (exists(iconPath)) {
-                    const iconExt = path.extname(iconPath);
-                    const iconName = path.basename(iconPath, iconExt);
-                    const fileName = await callback(`${iconName}${iconExt}`, iconPath);
+                    // Cache path operations for better performance
+                    let pathInfo = pathCache.get(iconPath);
+                    if (!pathInfo) {
+                        const iconExt = path.extname(iconPath);
+                        const iconName = path.basename(iconPath, iconExt);
+                        pathInfo = { ext: iconExt, name: iconName };
+                        pathCache.set(iconPath, pathInfo);
+                    }
+
+                    const fileName = await callback(`${pathInfo.name}${pathInfo.ext}`, iconPath);
 
                     // Update the icon path in the manifest
                     icon.src = fileName;
@@ -146,12 +202,24 @@ async function emitShortcutIcons(
 
 /**
  * Vite plugin for transforming webmanifest
- * Optimizes icons, screenshots and shortcuts by processing them in parallel
- * and updates manifest paths according to the build configuration
+ *
+ * Features:
+ * - Optimizes icons, screenshots and shortcuts by processing them in parallel
+ * - Updates manifest paths according to the build configuration
+ * - Supports both assets and root output modes
+ * - Maintains file hashing for cache busting
+ * - Updates HTML links automatically
+ *
+ * @param options - Plugin configuration options
+ * @returns Vite plugin instance
  */
-export const webmanifestPlugin = (): Plugin => {
+export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugin => {
     let base: string = './';
     let root: string = process.cwd();
+    const { manifestOutput = 'root' } = options;
+
+    // Store manifest file name for writeBundle hook
+    let storedManifestFileName: string | undefined;
 
     return {
         name: 'vite:webmanifest',
@@ -171,11 +239,12 @@ export const webmanifestPlugin = (): Plugin => {
             const pluginContext = this;
 
             let manifestPath: string | undefined;
+            let manifestJson: WebManifest;
             const indexPath = path.resolve(root, 'index.html');
 
             if (exists(indexPath)) {
                 const indexContent = await readFile(indexPath, 'utf-8');
-                const $ = cheerio.load(indexContent);
+                const $ = load(indexContent);
                 const manifestLink = $(MANIFEST_LINK_SELECTOR);
 
                 if (manifestLink.length > 0) {
@@ -196,11 +265,11 @@ export const webmanifestPlugin = (): Plugin => {
                 this.error('WebManifest file not found. Make sure index.html contains <link rel="manifest" href="...">');
             }
 
-            let manifestJson: WebManifest;
-
             try {
                 const manifestContent = await readFile(manifestPath!, 'utf-8');
                 manifestJson = JSON.parse(manifestContent) as WebManifest;
+
+                // No need to store for writeBundle - we handle everything in generateBundle
             } catch (error) {
                 this.error(
                     `Failed to parse WebManifest file: ${error instanceof Error ? error.message : String(error)}`,
@@ -221,9 +290,8 @@ export const webmanifestPlugin = (): Plugin => {
 
                 const fileName = this.getFileName(fileId);
 
-                // Remove only 'assets/' prefix, keep subdirectories like 'svgs/'
-                const cleanFileName = fileName.startsWith('assets/') ? fileName.slice(7) : fileName;
-                return `./${cleanFileName}`;
+                // Keep the full path including 'assets/' prefix for proper asset referencing
+                return `./${fileName}`;
             };
 
             // Process all icons in parallel
@@ -244,15 +312,22 @@ export const webmanifestPlugin = (): Plugin => {
             // Get file name of the manifest
             const manifestExt = path.extname(manifestPath);
             const manifestName = path.basename(manifestPath, manifestExt);
+            const manifestContent = JSON.stringify(manifestJson, null, 4);
 
-            // Emit the updated manifest
+            let manifestfileName: string;
+
+            // Always emit with name to get hashing, then adjust path in HTML
             const fileId = this.emitFile({
                 type: 'asset',
                 name: `${manifestName}${manifestExt}`,
-                source: JSON.stringify(manifestJson, null, 4),
+                source: manifestContent,
             });
+            manifestfileName = this.getFileName(fileId);
 
-            const manifestfileName = this.getFileName(fileId);
+            // Store for writeBundle hook if needed
+            if (manifestOutput === 'root') {
+                storedManifestFileName = manifestfileName;
+            }
 
             // Single pass through bundle: update HTML and remove old manifest
             for (const fileName in bundle) {
@@ -264,7 +339,7 @@ export const webmanifestPlugin = (): Plugin => {
                     fileChunk.type === 'asset' &&
                     typeof fileChunk.source === 'string'
                 ) {
-                    const $ = cheerio.load(fileChunk.source);
+                    const $ = load(fileChunk.source);
                     const manifestLink = $(MANIFEST_LINK_SELECTOR);
 
                     if (manifestLink.length > 0) {
@@ -280,8 +355,40 @@ export const webmanifestPlugin = (): Plugin => {
                 }
             }
 
-            // Clear cache after bundle is complete
+            // Clear caches after bundle is complete
             fileCache.clear();
+            pathCache.clear();
         },
+
+        async writeBundle(options) {
+            // Move manifest from /assets/ to root if needed
+            if (manifestOutput === 'root' && storedManifestFileName) {
+                const outputDir = options.dir || 'dist';
+
+                // storedManifestFileName already contains 'assets/' prefix, so use it directly
+                const assetsManifestPath = path.join(outputDir, storedManifestFileName);
+
+                // Extract just the filename without 'assets/' prefix for root
+                const manifestFileName = storedManifestFileName.replace(/^assets\//, '');
+                const rootManifestPath = path.join(outputDir, manifestFileName);
+
+                try {
+                    // Read from assets folder
+                    const manifestContent = await readFile(assetsManifestPath, 'utf-8');
+
+                    // Write to root
+                    await writeFile(rootManifestPath, manifestContent, 'utf-8');
+
+                    // Update HTML files to reference the root manifest
+                    await updateHtmlManifestLinks(outputDir, manifestFileName);
+
+                    // Remove from assets folder
+                    await unlink(assetsManifestPath);
+                } catch (error) {
+                    console.error(`❌ Failed to move manifest: ${error instanceof Error ? error.message : String(error)}`);
+                }
+            }
+        },
+
     };
 };
