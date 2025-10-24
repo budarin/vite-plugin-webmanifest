@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite';
 
-import { readFile, access, constants } from 'fs/promises';
+import { readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
 
@@ -42,15 +43,10 @@ export type WebManifest = {
 };
 
 /**
- * Modern replacement for deprecated fs.exists
+ * Check if file exists
  */
-async function exists(filePath: string): Promise<boolean> {
-    try {
-        await access(filePath, constants.F_OK);
-        return true;
-    } catch {
-        return false;
-    }
+function exists(filePath: string): boolean {
+    return existsSync(filePath);
 }
 
 /**
@@ -76,6 +72,7 @@ async function emitIcons(
     base: string = '/',
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
+    pluginContext: any,
 ): Promise<void> {
     if (!icons || !Array.isArray(icons)) {
         return;
@@ -83,15 +80,25 @@ async function emitIcons(
 
     await Promise.all(
         icons.map(async (icon) => {
-            const iconPath = path.join(root, icon.src);
+            // Handle absolute paths starting with /
+            let iconPath: string;
+            if (icon.src.startsWith('/')) {
+                iconPath = path.join(root, icon.src.slice(1));
+            } else {
+                iconPath = path.resolve(root, icon.src);
+            }
 
-            if (await exists(iconPath)) {
+            if (exists(iconPath)) {
                 const iconExt = path.extname(iconPath);
                 const iconName = path.basename(iconPath, iconExt);
                 const fileName = await callback(`${iconName}${iconExt}`, iconPath);
 
                 // Update the icon path in the manifest
                 icon.src = `${base}${fileName}`;
+            } else {
+                pluginContext.error(`Icon file not found: ${iconPath}`, {
+                    code: 'ICON_NOT_FOUND',
+                });
             }
         }),
     );
@@ -105,6 +112,7 @@ async function emitShortcutIcons(
     base: string = '/',
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
+    pluginContext: any,
 ): Promise<void> {
     if (!shortcuts || !Array.isArray(shortcuts)) {
         return;
@@ -113,15 +121,25 @@ async function emitShortcutIcons(
     await Promise.all(
         shortcuts.flatMap((shortcut) =>
             shortcut.icons.map(async (icon) => {
-                const iconPath = path.join(root, icon.src);
+                // Handle absolute paths starting with /
+                let iconPath: string;
+                if (icon.src.startsWith('/')) {
+                    iconPath = path.join(root, icon.src.slice(1));
+                } else {
+                    iconPath = path.resolve(root, icon.src);
+                }
 
-                if (await exists(iconPath)) {
+                if (exists(iconPath)) {
                     const iconExt = path.extname(iconPath);
                     const iconName = path.basename(iconPath, iconExt);
                     const fileName = await callback(`${iconName}${iconExt}`, iconPath);
 
                     // Update the icon path in the manifest
                     icon.src = `${base}${fileName}`;
+                } else {
+                    pluginContext.error(`Shortcut icon file not found: ${iconPath}`, {
+                        code: 'SHORTCUT_ICON_NOT_FOUND',
+                    });
                 }
             }),
         ),
@@ -151,10 +169,13 @@ export const webmanifestPlugin = (): Plugin => {
             // Clear file cache at the start of each build
             fileCache.clear();
 
-            let manifestPath: string | undefined;
-            const indexPath = path.join(root, 'index.html');
+            // Capture plugin context for use in callbacks
+            const pluginContext = this;
 
-            if (await exists(indexPath)) {
+            let manifestPath: string | undefined;
+            const indexPath = path.resolve(root, 'index.html');
+
+            if (exists(indexPath)) {
                 const indexContent = await readFile(indexPath, 'utf-8');
                 const $ = cheerio.load(indexContent);
                 const manifestLink = $(MANIFEST_LINK_SELECTOR);
@@ -163,19 +184,24 @@ export const webmanifestPlugin = (): Plugin => {
                     const href = manifestLink.attr('href');
 
                     if (href) {
-                        manifestPath = path.join(root, href);
+                        // Handle absolute paths starting with /
+                        if (href.startsWith('/')) {
+                            manifestPath = path.join(root, href.slice(1));
+                        } else {
+                            manifestPath = path.resolve(root, href);
+                        }
                     }
                 }
             }
 
-            if (!manifestPath || !(await exists(manifestPath))) {
-                this.error('WebManifest file not found');
+            if (!manifestPath || !exists(manifestPath)) {
+                this.error('WebManifest file not found. Make sure index.html contains <link rel="manifest" href="...">');
             }
 
             let manifestJson: WebManifest;
 
             try {
-                const manifestContent = await readFile(manifestPath, 'utf-8');
+                const manifestContent = await readFile(manifestPath!, 'utf-8');
                 manifestJson = JSON.parse(manifestContent) as WebManifest;
             } catch (error) {
                 this.error(
@@ -200,9 +226,9 @@ export const webmanifestPlugin = (): Plugin => {
 
             // Process all icons in parallel
             await Promise.all([
-                emitIcons(manifestJson.icons, base, root, emitFileCallback),
-                emitIcons(manifestJson.screenshots, base, root, emitFileCallback),
-                emitShortcutIcons(manifestJson.shortcuts, base, root, emitFileCallback),
+                emitIcons(manifestJson.icons, base, root, emitFileCallback, pluginContext),
+                emitIcons(manifestJson.screenshots, base, root, emitFileCallback, pluginContext),
+                emitShortcutIcons(manifestJson.shortcuts, base, root, emitFileCallback, pluginContext),
             ]);
 
             // Get file name of the manifest
