@@ -226,7 +226,7 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
     return {
         name: 'vite:webmanifest',
         apply: 'build',
-        enforce: 'post',
+        enforce: 'pre',
 
         configResolved(config) {
             base = config.base;
