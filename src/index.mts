@@ -111,7 +111,9 @@ async function updateHtmlManifestLinks(outputDir: string, manifestFileName: stri
                 await writeFile(indexPath, $.html(), 'utf-8');
             }
         } catch (error) {
-            console.error(`❌ Failed to update HTML: ${error instanceof Error ? error.message : String(error)}`);
+            console.error(
+                `❌ Failed to update HTML: ${error instanceof Error ? error.message : String(error)}`
+            );
         }
     }
 }
@@ -124,7 +126,7 @@ async function emitIcons(
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
     pluginContext: any,
-    errorCode: string = 'ICON_NOT_FOUND',
+    errorCode: string = 'ICON_NOT_FOUND'
 ): Promise<void> {
     if (!icons || !Array.isArray(icons)) {
         return;
@@ -153,7 +155,7 @@ async function emitIcons(
                     code: errorCode,
                 });
             }
-        }),
+        })
     );
 }
 
@@ -164,7 +166,7 @@ async function emitShortcutIcons(
     shortcuts: Shortcut[] | undefined,
     root: string,
     callback: (iconName: string, iconPath: string) => Promise<string>,
-    pluginContext: any,
+    pluginContext: any
 ): Promise<void> {
     if (!shortcuts || !Array.isArray(shortcuts)) {
         return;
@@ -195,8 +197,8 @@ async function emitShortcutIcons(
                         code: 'SHORTCUT_ICON_NOT_FOUND',
                     });
                 }
-            }),
-        ),
+            })
+        )
     );
 }
 
@@ -239,7 +241,7 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
             const pluginContext = this;
 
             let manifestPath: string | undefined;
-            let manifestJson: WebManifest;
+            let manifestJson: WebManifest = {};
             const indexPath = path.resolve(root, 'index.html');
 
             if (exists(indexPath)) {
@@ -262,7 +264,9 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
             }
 
             if (!manifestPath || !exists(manifestPath)) {
-                this.error('WebManifest file not found. Make sure index.html contains <link rel="manifest" href="...">');
+                throw new Error(
+                    'WebManifest file not found. Make sure index.html contains <link rel="manifest" href="...">'
+                );
             }
 
             try {
@@ -272,7 +276,7 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
                 // No need to store for writeBundle - we handle everything in generateBundle
             } catch (error) {
                 this.error(
-                    `Failed to parse WebManifest file: ${error instanceof Error ? error.message : String(error)}`,
+                    `Failed to parse WebManifest file: ${error instanceof Error ? error.message : String(error)}`
                 );
             }
 
@@ -281,7 +285,10 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
             manifestJson.start_url = base;
 
             // Callback for emitting files with caching
-            const emitFileCallback = async (iconName: string, iconPath: string): Promise<string> => {
+            const emitFileCallback = async (
+                iconName: string,
+                iconPath: string
+            ): Promise<string> => {
                 const fileId = this.emitFile({
                     type: 'asset',
                     name: iconName,
@@ -361,34 +368,31 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
         },
 
         async writeBundle(options) {
-            // Move manifest from /assets/ to root if needed
             if (manifestOutput === 'root' && storedManifestFileName) {
                 const outputDir = options.dir || 'dist';
-
-                // storedManifestFileName already contains 'assets/' prefix, so use it directly
                 const assetsManifestPath = path.join(outputDir, storedManifestFileName);
 
-                // Extract just the filename without 'assets/' prefix for root
-                const manifestFileName = storedManifestFileName.replace(/^assets\//, '');
-                const rootManifestPath = path.join(outputDir, manifestFileName);
-
                 try {
-                    // Read from assets folder
+                    if (!existsSync(assetsManifestPath)) {
+                        console.warn(
+                            `Manifest file not found: ${assetsManifestPath}, skip moving.`
+                        );
+                        return;
+                    }
+
+                    const manifestFileName = storedManifestFileName.replace(/^assets\//, '');
+                    const rootManifestPath = path.join(outputDir, manifestFileName);
+
                     const manifestContent = await readFile(assetsManifestPath, 'utf-8');
-
-                    // Write to root
                     await writeFile(rootManifestPath, manifestContent, 'utf-8');
-
-                    // Update HTML files to reference the root manifest
                     await updateHtmlManifestLinks(outputDir, manifestFileName);
-
-                    // Remove from assets folder
                     await unlink(assetsManifestPath);
                 } catch (error) {
-                    console.error(`❌ Failed to move manifest: ${error instanceof Error ? error.message : String(error)}`);
+                    console.error(
+                        `❌ Failed to move manifest: ${error instanceof Error ? error.message : String(error)}`
+                    );
                 }
             }
         },
-
     };
 };

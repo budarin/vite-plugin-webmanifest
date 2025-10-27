@@ -70,7 +70,7 @@
     // prettier
     "prettier.enable": true,
     "json.format.enable": true,
-    "prettier.configPath": ".prettierrc.mjs",
+    "prettier.configPath": ".prettierrc",
     "prettier.experimentalTernaries": true,
     "prettier.enableDebugLogs": true,
     "prettier.prettierPath": "./node_modules/prettier",
