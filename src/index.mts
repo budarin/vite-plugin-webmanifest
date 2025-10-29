@@ -374,9 +374,9 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
 
                 try {
                     if (!existsSync(assetsManifestPath)) {
-                        console.warn(
-                            `Manifest file not found: ${assetsManifestPath}, skip moving.`
-                        );
+                        // console.warn(
+                        //     `Manifest file not found: ${assetsManifestPath}, skip moving.`
+                        // );
                         return;
                     }
 
