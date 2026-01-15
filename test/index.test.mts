@@ -44,36 +44,35 @@ describe('webmanifestPlugin', () => {
         }
     });
 
-    describe('with base: "/"', () => {
+    describe('with base: "/" (default assets)', () => {
         beforeAll(async () => {
             await runBuild('/');
         });
 
-        it('should generate manifest link without "./" prefix', async () => {
+        it('should generate manifest link with assets path', async () => {
             const html = await readDistFile('index.html');
             const match = html.match(/href="([^"]+manifest[^"]+\.json)"/);
             expect(match).toBeTruthy();
-            expect(match![1]).toMatch(/^\/manifest-[\w-]+\.json$/);
-            expect(match![1]).not.toContain('./');
+            expect(match![1]).toMatch(/^\/assets\/manifest-[\w-]+\.json$/);
         });
 
-        it('should place manifest in root by default', async () => {
-            const manifestFile = findManifestFile(distDir);
+        it('should place manifest in assets by default', async () => {
+            const manifestFile = findManifestFile(distDir, 'assets');
             expect(manifestFile).toBeTruthy();
-            expect(manifestFile).toMatch(/^manifest-[\w-]+\.json$/);
+            expect(manifestFile).toMatch(/^assets\/manifest-[\w-]+\.json$/);
         });
     });
 
-    describe('with base: "./"', () => {
+    describe('with base: "./" (default assets)', () => {
         beforeAll(async () => {
             await runBuild('./');
         });
 
-        it('should generate manifest link with "./" prefix', async () => {
+        it('should generate manifest link with "./" prefix and assets path', async () => {
             const html = await readDistFile('index.html');
             const match = html.match(/href="([^"]+manifest[^"]+\.json)"/);
             expect(match).toBeTruthy();
-            expect(match![1]).toMatch(/^\.\/manifest-[\w-]+\.json$/);
+            expect(match![1]).toMatch(/^\.\/assets\/manifest-[\w-]+\.json$/);
         });
     });
 
