@@ -1,9 +1,9 @@
 import type { Plugin } from 'vite';
 
-import { readFile, writeFile, unlink } from 'fs/promises';
-import { existsSync } from 'fs';
 import path from 'path';
 import { load } from 'cheerio';
+import { existsSync } from 'fs';
+import { readFile, writeFile, unlink } from 'fs/promises';
 
 // Constants
 const HTML_EXTENSION = '.html';
@@ -48,8 +48,8 @@ export type WebManifest = {
 export type WebManifestPluginOptions = {
     /**
      * Where to emit the manifest file
-     * @default 'root' - emits to /dist root
-     * @example 'assets' - emits to /assets/ folder (legacy behavior)
+     * @default 'assets' - emits to /assets/ folder
+     * @example 'root' - emits to /dist root
      */
     manifestOutput?: 'assets' | 'root';
 };
@@ -92,9 +92,20 @@ function resolveIconPath(src: string, root: string): string {
 }
 
 /**
+ * Build manifest href respecting base from vite config
+ */
+function buildManifestHref(base: string, manifestFileName: string): string {
+    return `${base}${manifestFileName}`;
+}
+
+/**
  * Update HTML files to reference the root manifest
  */
-async function updateHtmlManifestLinks(outputDir: string, manifestFileName: string): Promise<void> {
+async function updateHtmlManifestLinks(
+    outputDir: string,
+    base: string,
+    manifestFileName: string
+): Promise<void> {
     const indexPath = path.join(outputDir, 'index.html');
 
     if (existsSync(indexPath)) {
@@ -105,7 +116,7 @@ async function updateHtmlManifestLinks(outputDir: string, manifestFileName: stri
 
             if (manifestLink.length > 0) {
                 // Update href to point to root manifest
-                manifestLink.attr('href', `./${manifestFileName}`);
+                manifestLink.attr('href', buildManifestHref(base, manifestFileName));
 
                 // Write updated HTML
                 await writeFile(indexPath, $.html(), 'utf-8');
@@ -218,7 +229,7 @@ async function emitShortcutIcons(
 export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugin => {
     let base: string = './';
     let root: string = process.cwd();
-    const { manifestOutput = 'root' } = options;
+    const { manifestOutput = 'assets' } = options;
 
     // Store manifest file name for writeBundle hook
     let storedManifestFileName: string | undefined;
@@ -350,7 +361,7 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
                     const manifestLink = $(MANIFEST_LINK_SELECTOR);
 
                     if (manifestLink.length > 0) {
-                        manifestLink.attr('href', `${base}${manifestfileName}`);
+                        manifestLink.attr('href', buildManifestHref(base, manifestfileName));
                         fileChunk.source = $.html();
                     }
                 }
@@ -385,7 +396,7 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
 
                     const manifestContent = await readFile(assetsManifestPath, 'utf-8');
                     await writeFile(rootManifestPath, manifestContent, 'utf-8');
-                    await updateHtmlManifestLinks(outputDir, manifestFileName);
+                    await updateHtmlManifestLinks(outputDir, base, manifestFileName);
                     await unlink(assetsManifestPath);
                 } catch (error) {
                     console.error(

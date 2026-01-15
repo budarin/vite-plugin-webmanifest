@@ -43,7 +43,23 @@ Link your manifest in `index.html`:
 
 ## Configuration
 
-The plugin requires **no configuration**. It automatically:
+The plugin works out of the box with sensible defaults, but can be customized:
+
+```ts
+webmanifestPlugin({
+    manifestOutput: 'assets', // 'assets' | 'root'
+});
+```
+
+### Options
+
+| Option           | Type                   | Default    | Description                                                                                                                                                                                       |
+| ---------------- | ---------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `manifestOutput` | `'assets'` \| `'root'` | `'assets'` | Where to emit the manifest file. `'assets'` places it in the assets folder (e.g., `dist/assets/manifest-xxx.json`), `'root'` places it in the build output root (e.g., `dist/manifest-xxx.json`). |
+
+### Automatic Behavior
+
+The plugin automatically:
 
 - Discovers the manifest file from your `index.html`
 - Processes all referenced assets in parallel
