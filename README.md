@@ -7,6 +7,7 @@ A Vite plugin that processes Web App Manifest files, automatically emitting all 
 - 🚀 High-performance parallel processing of manifest assets
 - 📦 Automatic hashing of icons, screenshots, and shortcut icons
 - 🔄 Updates manifest paths and adjusts `scope`/`start_url` based on Vite's `base`
+- 📍 Always emits manifest to the root of the build output
 - 🔌 Zero configuration required
 
 ## Install
@@ -43,19 +44,7 @@ Link your manifest in `index.html`:
 
 ## Configuration
 
-The plugin works out of the box with sensible defaults, but can be customized:
-
-```ts
-webmanifestPlugin({
-    manifestOutput: 'assets', // 'assets' | 'root'
-});
-```
-
-### Options
-
-| Option           | Type                   | Default    | Description                                                                                                                                                                                       |
-| ---------------- | ---------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `manifestOutput` | `'assets'` \| `'root'` | `'assets'` | Where to emit the manifest file. `'assets'` places it in the assets folder (e.g., `dist/assets/manifest-xxx.json`), `'root'` places it in the build output root (e.g., `dist/manifest-xxx.json`). |
+The plugin works out of the box with zero configuration required. The manifest file is always emitted to the root of the build output directory.
 
 ### Automatic Behavior
 
@@ -64,6 +53,7 @@ The plugin automatically:
 - Discovers the manifest file from your `index.html`
 - Processes all referenced assets in parallel
 - Updates paths with content hashes for optimal caching
+- Always places the manifest file in the root of the build output
 - Adjusts `scope` and `start_url` based on Vite's `base` config
 
 ## License

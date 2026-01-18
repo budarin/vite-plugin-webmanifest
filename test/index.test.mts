@@ -44,61 +44,16 @@ describe('webmanifestPlugin', () => {
         }
     });
 
-    describe('with base: "/" (default assets)', () => {
+    describe('with base: "/"', () => {
         beforeAll(async () => {
             await runBuild('/');
         });
 
-        it('should generate manifest link with assets path', async () => {
+        it('should generate manifest link pointing to root', async () => {
             const html = await readDistFile('index.html');
             const match = html.match(/href="([^"]+manifest[^"]+\.json)"/);
             expect(match).toBeTruthy();
-            expect(match![1]).toMatch(/^\/assets\/manifest-[\w-]+\.json$/);
-        });
-
-        it('should place manifest in assets by default', async () => {
-            const manifestFile = findManifestFile(distDir, 'assets');
-            expect(manifestFile).toBeTruthy();
-            expect(manifestFile).toMatch(/^assets\/manifest-[\w-]+\.json$/);
-        });
-    });
-
-    describe('with base: "./" (default assets)', () => {
-        beforeAll(async () => {
-            await runBuild('./');
-        });
-
-        it('should generate manifest link with "./" prefix and assets path', async () => {
-            const html = await readDistFile('index.html');
-            const match = html.match(/href="([^"]+manifest[^"]+\.json)"/);
-            expect(match).toBeTruthy();
-            expect(match![1]).toMatch(/^\.\/assets\/manifest-[\w-]+\.json$/);
-        });
-    });
-
-    describe('with manifestOutput: "assets"', () => {
-        beforeAll(async () => {
-            await runBuild('/', { manifestOutput: 'assets' });
-        });
-
-        it('should place manifest in assets folder', async () => {
-            const manifestFile = findManifestFile(distDir, 'assets');
-            expect(manifestFile).toBeTruthy();
-            expect(manifestFile).toMatch(/^assets\/manifest-[\w-]+\.json$/);
-        });
-
-        it('should have matching href in HTML', async () => {
-            const html = await readDistFile('index.html');
-            const match = html.match(/href="([^"]+manifest[^"]+\.json)"/);
-            expect(match).toBeTruthy();
-            // Href should point to assets folder
-            expect(match![1]).toMatch(/^\/assets\/manifest-[\w-]+\.json$/);
-        });
-    });
-
-    describe('with manifestOutput: "root"', () => {
-        beforeAll(async () => {
-            await runBuild('/', { manifestOutput: 'root' });
+            expect(match![1]).toMatch(/^\/manifest-[\w-]+\.json$/);
         });
 
         it('should place manifest in root folder', async () => {
@@ -106,12 +61,19 @@ describe('webmanifestPlugin', () => {
             expect(manifestFile).toBeTruthy();
             expect(manifestFile).toMatch(/^manifest-[\w-]+\.json$/);
         });
+    });
 
-        it('should have matching href in HTML without assets prefix', async () => {
+    describe('with base: "./"', () => {
+        beforeAll(async () => {
+            await runBuild('./');
+        });
+
+        it('should generate manifest link with "./" prefix pointing to root', async () => {
             const html = await readDistFile('index.html');
             const match = html.match(/href="([^"]+manifest[^"]+\.json)"/);
             expect(match).toBeTruthy();
-            expect(match![1]).not.toContain('assets');
+            expect(match![1]).toMatch(/^\.\/manifest-[\w-]+\.json$/);
         });
     });
+
 });

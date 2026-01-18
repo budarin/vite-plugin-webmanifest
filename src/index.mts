@@ -46,12 +46,7 @@ export type WebManifest = {
  * Plugin configuration options
  */
 export type WebManifestPluginOptions = {
-    /**
-     * Where to emit the manifest file
-     * @default 'assets' - emits to /assets/ folder
-     * @example 'root' - emits to /dist root
-     */
-    manifestOutput?: 'assets' | 'root';
+    // No options currently available
 };
 
 /**
@@ -219,17 +214,16 @@ async function emitShortcutIcons(
  * Features:
  * - Optimizes icons, screenshots and shortcuts by processing them in parallel
  * - Updates manifest paths according to the build configuration
- * - Supports both assets and root output modes
+ * - Always emits manifest to the root of the build output
  * - Maintains file hashing for cache busting
  * - Updates HTML links automatically
  *
  * @param options - Plugin configuration options
  * @returns Vite plugin instance
  */
-export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugin => {
+export const webmanifestPlugin = (_options: WebManifestPluginOptions = {}): Plugin => {
     let base: string = './';
     let root: string = process.cwd();
-    const { manifestOutput = 'assets' } = options;
 
     // Store manifest file name for writeBundle hook
     let storedManifestFileName: string | undefined;
@@ -342,10 +336,8 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
             });
             manifestfileName = this.getFileName(fileId);
 
-            // Store for writeBundle hook if needed
-            if (manifestOutput === 'root') {
-                storedManifestFileName = manifestfileName;
-            }
+            // Store for writeBundle hook to move manifest to root
+            storedManifestFileName = manifestfileName;
 
             // Single pass through bundle: update HTML and remove old manifest
             for (const fileName in bundle) {
@@ -379,30 +371,29 @@ export const webmanifestPlugin = (options: WebManifestPluginOptions = {}): Plugi
         },
 
         async writeBundle(options) {
-            if (manifestOutput === 'root' && storedManifestFileName) {
-                const outputDir = options.dir || 'dist';
-                const assetsManifestPath = path.join(outputDir, storedManifestFileName);
+            if (!storedManifestFileName) {
+                return;
+            }
 
-                try {
-                    if (!existsSync(assetsManifestPath)) {
-                        // console.warn(
-                        //     `Manifest file not found: ${assetsManifestPath}, skip moving.`
-                        // );
-                        return;
-                    }
+            const outputDir = options.dir || 'dist';
+            const assetsManifestPath = path.join(outputDir, storedManifestFileName);
 
-                    const manifestFileName = storedManifestFileName.replace(/^assets\//, '');
-                    const rootManifestPath = path.join(outputDir, manifestFileName);
-
-                    const manifestContent = await readFile(assetsManifestPath, 'utf-8');
-                    await writeFile(rootManifestPath, manifestContent, 'utf-8');
-                    await updateHtmlManifestLinks(outputDir, base, manifestFileName);
-                    await unlink(assetsManifestPath);
-                } catch (error) {
-                    console.error(
-                        `❌ Failed to move manifest: ${error instanceof Error ? error.message : String(error)}`
-                    );
+            try {
+                if (!existsSync(assetsManifestPath)) {
+                    return;
                 }
+
+                const manifestFileName = storedManifestFileName.replace(/^assets\//, '');
+                const rootManifestPath = path.join(outputDir, manifestFileName);
+
+                const manifestContent = await readFile(assetsManifestPath, 'utf-8');
+                await writeFile(rootManifestPath, manifestContent, 'utf-8');
+                await updateHtmlManifestLinks(outputDir, base, manifestFileName);
+                await unlink(assetsManifestPath);
+            } catch (error) {
+                console.error(
+                    `❌ Failed to move manifest: ${error instanceof Error ? error.message : String(error)}`
+                );
             }
         },
     };
