@@ -113,7 +113,7 @@
 
     // workbench
     "workbench.iconTheme": "vscode-icons",
-    "workbench.colorTheme": "Default Dark+",
+    "workbench.colorTheme": "Dark+",
     "workbench.externalBrowser": "chrome",
     "workbench.colorCustomizations": {},
 
