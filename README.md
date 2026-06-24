@@ -36,10 +36,10 @@ export default defineConfig({
 });
 ```
 
-Link your manifest in `index.html`:
+Link your manifest in `index.html` ensuring href uses a relative path, not an absolute one:
 
 ```html
-<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="manifest" href="./manifest.webmanifest" />
 ```
 
 ## Configuration
